@@ -38,7 +38,7 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Scrape
-        run: python scraper/run.py ${{ (github.event_name == 'push' || inputs.discover) && '--discover' || '' }}
+        run: python -u scraper/run.py ${{ (github.event_name == 'push' || inputs.discover) && '--discover' || '' }}
 
       - name: Upload raw responses (discover mode)
         if: ${{ always() && (github.event_name == 'push' || inputs.discover) }}

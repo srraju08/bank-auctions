@@ -91,8 +91,12 @@ def scrape(cfg: dict, debug_dir: Path | None = None, log=print) -> list[dict]:
         page = ctx.new_page()
         dump_n = [0]
 
+        netlog = []
+
         def on_response(resp):
-            if "json" not in (resp.headers.get("content-type") or ""):
+            ctype = resp.headers.get("content-type") or ""
+            netlog.append(f"{resp.status} {resp.request.method} {resp.request.resource_type} {ctype[:40]} {resp.url[:160]}")
+            if "json" not in ctype and resp.request.resource_type not in ("xhr", "fetch"):
                 return
             try:
                 payload = resp.json()
@@ -118,9 +122,19 @@ def scrape(cfg: dict, debug_dir: Path | None = None, log=print) -> list[dict]:
             except Exception as e:
                 log(f"  load warning: {e}")
             time.sleep(delay)
+            time.sleep(8)  # SPA needs time to fetch listings
             for _ in range(4):  # trigger lazy loading
                 page.mouse.wheel(0, 4000)
                 time.sleep(delay)
+            log(f"  landed on {page.url} | title: {page.title()!r} | {len(records)} listings so far")
+            if debug_dir is not None:
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                slug = re.sub(r"[^a-z0-9]+", "_", url.lower())[-40:]
+                page.screenshot(path=str(debug_dir / f"page_{slug}.png"), full_page=True)
+                (debug_dir / f"page_{slug}.html").write_text(page.content())
+                links = page.eval_on_selector_all("a[href]", "els => [...new Set(els.map(e => e.href))]")
+                (debug_dir / f"links_{slug}.txt").write_text("\n".join(links))
+                log("  body text: " + page.inner_text("body")[:400].replace("\n", " | "))
 
         # 1) API replay — fastest and most complete
         for ep in list(endpoints):
@@ -173,5 +187,11 @@ def scrape(cfg: dict, debug_dir: Path | None = None, log=print) -> list[dict]:
 
         browser.close()
 
+    if debug_dir is not None:
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        (debug_dir / "network_log.txt").write_text("\n".join(netlog))
+        log(f"  network: {len(netlog)} responses; api-like:")
+        for line in [l for l in netlog if " xhr " in l or " fetch " in l][:40]:
+            log("    " + line)
     log(f"BAANKNET: {len(records)} listings")
     return list(records.values())
