@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank Auction Finder — India</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mute:#5f6b7a;--line:#e3e7ec;--acc:#0b6e4f;--acc2:#e8f3ef;--warn:#b54708;--warnbg:#fff4e5;--new:#1d4ed8;--newbg:#e8efff}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1419;--card:#18202a;--ink:#e6ebf0;--mute:#93a0ae;--line:#2a3542;--acc:#4cc59a;--acc2:#163328;--warn:#f5a35a;--warnbg:#3a2614;--new:#8fb0ff;--newbg:#1b2747}}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:14px 16px 8px;max-width:1100px;margin:auto}
+  h1{font-size:20px;margin:0 0 2px}
+  .sub{color:var(--mute);font-size:13px}
+  .banner{background:var(--warnbg);color:var(--warn);padding:8px 12px;border-radius:8px;margin-top:8px;font-size:13px}
+  main{max-width:1100px;margin:auto;padding:0 16px 40px}
+  details.filters{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 12px}
+  details.filters summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  details.filters summary::-webkit-details-marker{display:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px}
+  label{display:flex;flex-direction:column;font-size:12px;color:var(--mute);gap:4px}
+  input,select{font:inherit;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
+  .chk input{width:auto}
+  button{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  .stats{color:var(--mute);font-size:13px;margin:4px 2px 10px}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+  .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .price{font-size:20px;font-weight:700}
+  .emd{color:var(--mute);font-size:12px}
+  .tag{font-size:11px;padding:2px 7px;border-radius:999px;background:var(--acc2);color:var(--acc);white-space:nowrap}
+  .tag.new{background:var(--newbg);color:var(--new)}
+  .tag.soon{background:var(--warnbg);color:var(--warn)}
+  .loc{font-weight:600}
+  .meta{color:var(--mute);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .title{font-size:13px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .card a{color:var(--acc);font-weight:600;text-decoration:none;font-size:14px;margin-top:auto}
+  .pager{display:flex;justify-content:center;gap:8px;margin:18px 0}
+  .empty{text-align:center;color:var(--mute);padding:40px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bank Auction Finder</h1>
+  <div class="sub" id="updated">Loading…</div>
+  <div class="banner" id="banner" hidden></div>
+</header>
+<main>
+  <details class="filters" id="filterBox" open>
+    <summary><span>Filters <span id="activeCount" class="sub"></span></span><span class="sub">tap to hide</span></summary>
+    <div class="grid">
+      <label>Search<input id="q" placeholder="locality, bank, borrower…"></label>
+      <label>State<select id="state"><option value="">All states</option></select></label>
+      <label>City / District<select id="city"><option value="">All cities</option></select></label>
+      <label>Property type<select id="ptype"><option value="">All types</option></select></label>
+      <label>Bank<select id="bank"><option value="">All banks</option></select></label>
+      <label>Possession<select id="poss"><option value="">Any</option><option value="physical">Physical</option><option value="symbolic">Symbolic</option></select></label>
+      <label>Min price (₹ lakh)<input id="minp" type="number" inputmode="decimal" min="0"></label>
+      <label>Max price (₹ lakh)<input id="maxp" type="number" inputmode="decimal" min="0"></label>
+      <label>Auction within<select id="within"><option value="">Any date</option><option value="7">7 days</option><option value="15">15 days</option><option value="30">30 days</option><option value="60">60 days</option></select></label>
+      <label>Sort by<select id="sort"><option value="date">Auction date (soonest)</option><option value="price">Price (low → high)</option><option value="price_desc">Price (high → low)</option><option value="new">Newest listed</option></select></label>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="upcoming" checked>Hide past auctions</label>
+      <label class="chk"><input type="checkbox" id="onlyNew">Only new (last 3 days)</label>
+    </div>
+    <div class="row">
+      <button class="primary" id="save">Save as my preferences</button>
+      <button id="reset">Reset</button>
+      <button id="share">Copy link to this search</button>
+    </div>
+  </details>
+  <div class="stats" id="stats"></div>
+  <div class="list" id="list"></div>
+  <div class="pager" id="pager"></div>
+</main>
+<script>
+const PAGE = 48;
+const $ = id => document.getElementById(id);
+const FIELDS = ["q","state","city","ptype","bank","poss","minp","maxp","within","sort","upcoming","onlyNew"];
+let ALL = [], view = [], page = 0;
+
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+};
+
+function inr(n){
+  if (n == null) return "—";
+  if (n >= 1e7) return "₹" + (n/1e7).toFixed(2).replace(/\.?0+$/,"") + " Cr";
+  if (n >= 1e5) return "₹" + (n/1e5).toFixed(2).replace(/\.?0+$/,"") + " L";
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+function fmtDate(s){
+  if (!s) return "Date not given";
+  const d = new Date(s);
+  return isNaN(d) ? s : d.toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});
+}
+function daysTo(s){ if(!s) return null; const d = new Date(s); return isNaN(d) ? null : Math.ceil((d - Date.now())/864e5); }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function getState(){
+  const s = {};
+  for (const f of FIELDS){ const el = $(f); s[f] = el.type === "checkbox" ? el.checked : el.value; }
+  return s;
+}
+function setState(s){
+  if (!s) return;
+  for (const f of FIELDS){ if (!(f in s)) continue; const el = $(f); if (el.type === "checkbox") el.checked = !!s[f]; else el.value = s[f]; }
+}
+function fillSelect(id, values, keep){
+  const el = $(id), first = el.options[0].outerHTML;
+  el.innerHTML = first + values.map(v => `<option>${esc(v)}</option>`).join("");
+  if (keep && values.includes(keep)) el.value = keep;
+}
+function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b)); }
+
+function refreshCities(){
+  const st = $("state").value, keep = $("city").value;
+  fillSelect("city", uniq(ALL.filter(r => !st || r.state === st).map(r => r.city)), keep);
+}
+
+function apply(){
+  const s = getState(), q = s.q.trim().toLowerCase();
+  const minp = s.minp ? +s.minp * 1e5 : null, maxp = s.maxp ? +s.maxp * 1e5 : null;
+  const today = new Date().toISOString().slice(0,10);
+  const newCut = new Date(Date.now() - 3*864e5).toISOString().slice(0,10);
+  view = ALL.filter(r => {
+    if (s.state && r.state !== s.state) return false;
+    if (s.city && r.city !== s.city) return false;
+    if (s.ptype && r.property_type !== s.ptype) return false;
+    if (s.bank && r.bank !== s.bank) return false;
+    if (s.poss && !(r.possession||"").toLowerCase().includes(s.poss)) return false;
+    if (minp != null && (r.reserve_price ?? -1) < minp) return false;
+    if (maxp != null && (r.reserve_price ?? Infinity) > maxp) return false;
+    if (s.upcoming && r.auction_date && r.auction_date.slice(0,10) < today) return false;
+    if (s.within){ const d = daysTo(r.auction_date); if (d == null || d < 0 || d > +s.within) return false; }
+    if (s.onlyNew && (r.first_seen||"") < newCut) return false;
+    if (q && ![r.title,r.address,r.city,r.state,r.bank,r.pincode,r.property_type].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const by = {
+    date: (a,b) => (a.auction_date||"9999").localeCompare(b.auction_date||"9999"),
+    price: (a,b) => (a.reserve_price ?? 1e15) - (b.reserve_price ?? 1e15),
+    price_desc: (a,b) => (b.reserve_price ?? -1) - (a.reserve_price ?? -1),
+    new: (a,b) => (b.first_seen||"").localeCompare(a.first_seen||""),
+  }[s.sort] || (()=>0);
+  view.sort(by);
+  const active = FIELDS.filter(f => !["sort","upcoming"].includes(f) && s[f]).length;
+  $("activeCount").textContent = active ? `· ${active} active` : "";
+  page = 0; render();
+}
+
+function card(r){
+  const d = daysTo(r.auction_date);
+  const newCut = new Date(Date.now() - 3*864e5).toISOString().slice(0,10);
+  const tags = [];
+  if ((r.first_seen||"") >= newCut) tags.push(`<span class="tag new">New</span>`);
+  if (d != null && d >= 0 && d <= 7) tags.push(`<span class="tag soon">${d === 0 ? "Today" : d + "d left"}</span>`);
+  const loc = [r.city, r.state].filter(Boolean).join(", ") || "Location not given";
+  const link = r.url || "https://baanknet.com/";
+  return `<div class="card">
+    <div class="top"><div><div class="price">${inr(r.reserve_price)}</div><div class="emd">Reserve · EMD ${inr(r.emd)}</div></div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${tags.join("")}<span class="tag">${esc(r.property_type)}</span></div></div>
+    <div class="loc">${esc(loc)}${r.pincode ? " · " + esc(r.pincode) : ""}</div>
+    <div class="meta"><span>🏦 ${esc(r.bank || "Bank not given")}</span><span>📅 ${esc(fmtDate(r.auction_date))}</span>
+      ${r.possession ? `<span>🔑 ${esc(r.possession)}</span>` : ""}${r.area ? `<span>📐 ${esc(r.area)}</span>` : ""}</div>
+    ${r.title || r.address ? `<div class="title">${esc(r.title || "")}${r.address && r.address !== r.title ? " — " + esc(r.address) : ""}</div>` : ""}
+    ${r.emd_last_date ? `<div class="meta"><span>EMD deadline: ${esc(fmtDate(r.emd_last_date))}</span></div>` : ""}
+    <a href="${esc(link)}" target="_blank" rel="noopener">View on ${esc((r.source||"portal").toUpperCase())} →</a>
+  </div>`;
+}
+
+function render(){
+  const total = view.length, pages = Math.ceil(total / PAGE);
+  $("stats").textContent = `${total.toLocaleString("en-IN")} of ${ALL.length.toLocaleString("en-IN")} listings match`;
+  $("list").innerHTML = total ? view.slice(page*PAGE, (page+1)*PAGE).map(card).join("")
+    : `<div class="empty">No listings match. Widen the price range or clear a filter.</div>`;
+  $("pager").innerHTML = pages > 1 ? `<button ${page===0?"disabled":""} id="prev">← Prev</button><span class="sub" style="align-self:center">Page ${page+1} / ${pages}</span><button ${page>=pages-1?"disabled":""} id="next">Next →</button>` : "";
+  if (pages > 1){
+    $("prev").onclick = () => { page--; render(); scrollTo(0, $("stats").offsetTop - 10); };
+    $("next").onclick = () => { page++; render(); scrollTo(0, $("stats").offsetTop - 10); };
+  }
+}
+
+async function load(){
+  try {
+    const [rows, meta] = await Promise.all([
+      fetch("data/listings.json", {cache:"no-cache"}).then(r => r.json()),
+      fetch("data/meta.json", {cache:"no-cache"}).then(r => r.json()).catch(() => ({}))
+    ]);
+    ALL = rows;
+    const when = meta.updated ? new Date(meta.updated).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}) : "unknown";
+    $("updated").textContent = `${ALL.length.toLocaleString("en-IN")} listings · updated ${when}` + (meta.new_today ? ` · ${meta.new_today} new today` : "");
+    const failed = Object.entries(meta.sources||{}).filter(([,v]) => !v.ok).map(([k]) => k);
+    if (meta.sample){ $("banner").hidden = false; $("banner").textContent = "Sample data — made-up listings to show how the site works. Real listings appear after the first scraper run."; }
+    else if (failed.length){ $("banner").hidden = false; $("banner").textContent = `Last refresh failed for: ${failed.join(", ")}. Showing the previous data.`; }
+  } catch (e) {
+    $("updated").textContent = "Could not load listings.";
+    return;
+  }
+  fillSelect("state", uniq(ALL.map(r => r.state)));
+  fillSelect("ptype", uniq(ALL.map(r => r.property_type)));
+  fillSelect("bank", uniq(ALL.map(r => r.bank)));
+  const fromHash = location.hash.length > 1 ? Object.fromEntries(new URLSearchParams(location.hash.slice(1))) : null;
+  if (fromHash){ for (const k of ["upcoming","onlyNew"]) if (k in fromHash) fromHash[k] = fromHash[k] === "1"; }
+  const saved = fromHash || store.get("auctionPrefs");
+  if (saved){ $("state").value = saved.state || ""; refreshCities(); setState(saved); } else refreshCities();
+  apply();
+}
+
+for (const f of FIELDS) $(f).addEventListener(f === "q" || f === "minp" || f === "maxp" ? "input" : "change", () => { if (f === "state") refreshCities(); apply(); });
+$("save").onclick = () => { $("save").textContent = store.set("auctionPrefs", getState()) ? "Saved ✓" : "Couldn't save here"; setTimeout(() => $("save").textContent = "Save as my preferences", 1800); };
+$("reset").onclick = () => { setState({q:"",state:"",city:"",ptype:"",bank:"",poss:"",minp:"",maxp:"",within:"",sort:"date",upcoming:true,onlyNew:false}); refreshCities(); history.replaceState(null,"",location.pathname); apply(); };
+$("share").onclick = async () => {
+  const s = getState(), p = new URLSearchParams();
+  for (const [k,v] of Object.entries(s)) if (v !== "" && v !== false) p.set(k, v === true ? "1" : v);
+  const url = location.origin + location.pathname + "#" + p.toString();
+  history.replaceState(null, "", "#" + p.toString());
+  try { await navigator.clipboard.writeText(url); $("share").textContent = "Link copied ✓"; } catch { $("share").textContent = "Link is in the address bar"; }
+  setTimeout(() => $("share").textContent = "Copy link to this search", 1800);
+};
+load();
+</script>
+</body>
+</html>

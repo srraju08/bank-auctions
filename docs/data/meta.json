@@ -1,0 +1,12 @@
+{
+ "updated": "2026-11-15T18:25:10.847546",
+ "total": 60,
+ "new_today": 7,
+ "sources": {
+  "baanknet": {
+   "ok": true,
+   "count": 60
+  }
+ },
+ "sample": true
+}

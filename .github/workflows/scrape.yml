@@ -1,0 +1,55 @@
+name: Scrape bank auctions
+
+on:
+  schedule:
+    - cron: "17 1 * * *"   # daily 06:47 IST
+  workflow_dispatch:
+    inputs:
+      discover:
+        description: "Save raw API responses for debugging"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Scrape
+        run: python scraper/run.py ${{ inputs.discover && '--discover' || '' }}
+
+      - name: Upload raw responses (discover mode)
+        if: ${{ always() && inputs.discover }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-responses
+          path: scraper/debug/
+          if-no-files-found: ignore
+
+      - name: Commit data
+        if: always()
+        run: |
+          git config user.name  "auction-bot"
+          git config user.email "auction-bot@users.noreply.github.com"
+          git add docs/data
+          git diff --cached --quiet || git commit -m "Update listings $(date -u +%F)"
+          git push

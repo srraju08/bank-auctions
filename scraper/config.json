@@ -1,0 +1,14 @@
+{
+  "keep_days_after_auction": 3,
+  "sources": {
+    "baanknet": {
+      "enabled": true,
+      "start_urls": [
+        "https://baanknet.com/property-listing",
+        "https://baanknet.com/"
+      ],
+      "max_pages": 400,
+      "delay_seconds": 1.5
+    }
+  }
+}
