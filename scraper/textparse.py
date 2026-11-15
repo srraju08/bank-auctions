@@ -124,6 +124,12 @@ def location(text: str):
         c = CANON.get(c.lower(), c.title())
         counts[c] = counts.get(c, 0) + 1
     city = max(counts, key=counts.get) if counts else None
+    # prefer the city named in the property description itself
+    m = re.search(r"(description of (?:the )?(?:immovable )?propert|details of (?:the )?(?:immovable )?propert|property address|all that (?:piece|part)|situated at)", body, re.I)
+    if m:
+        cm = CITY_RE.search(body[m.end(): m.end() + 700])
+        if cm:
+            city = CANON.get(cm.group(1).lower(), cm.group(1).title())
     pins = re.findall(r"(?<!\d)([1-8]\d{2})\s?(\d{3})(?!\d)", body)
     pincode = state = None
     if pins:

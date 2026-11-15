@@ -1,5 +1,9 @@
 name: Scrape bank auctions
 
+# Runs on Raju's Windows PC (self-hosted runner) because BAANKNET blocks
+# GitHub's own servers. If the PC is off at the scheduled time, GitHub keeps
+# the job queued for up to 24 hours and runs it as soon as the PC is back on.
+
 on:
   schedule:
     - cron: "17 1 * * *"   # daily 06:47 IST
@@ -22,23 +26,30 @@ concurrency:
 
 jobs:
   scrape:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows]
     timeout-minutes: 120
+    defaults:
+      run:
+        shell: powershell
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
       - name: Install
         run: |
-          pip install -r requirements.txt
-          python -m playwright install --with-deps chromium
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet -r requirements.txt
+          python -m playwright install chromium
 
       - name: Scrape
-        run: python -u scraper/run.py ${{ (github.event_name == 'push' || inputs.discover) && '--discover' || '' }}
+        run: |
+          if ("${{ github.event_name }}" -eq "push" -or "${{ inputs.discover }}" -eq "true") {
+            python -u scraper/run.py --discover
+          } else {
+            python -u scraper/run.py
+          }
 
       - name: Upload raw responses (discover mode)
         if: ${{ always() && (github.event_name == 'push' || inputs.discover) }}
@@ -54,5 +65,10 @@ jobs:
           git config user.name  "auction-bot"
           git config user.email "auction-bot@users.noreply.github.com"
           git add docs/data scraper/cache
-          git diff --cached --quiet || git commit -m "Update listings $(date -u +%F)"
-          git push
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "Update listings $(Get-Date -Format yyyy-MM-dd)"
+            git pull --rebase
+            git push
+          }
+          exit 0

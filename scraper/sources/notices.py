@@ -118,7 +118,13 @@ def scrape(cfg: dict, debug_dir: Path | None = None, log=print) -> tuple[list[di
             st["pdf_links"] = len(links)
 
             new = 0
-            for link in sorted(links):
+            def recency(u):  # newest notices first (dates like 03-11-26 in file names)
+                m = re.search(r"(\d{2})[-_](\d{2})[-_](\d{2,4})(?:\D*$|\.pdf)", u)
+                if not m:
+                    return "0"
+                y = m.group(3)[-2:]
+                return f"{y}{m.group(2)}{m.group(1)}"
+            for link in sorted(links, key=recency, reverse=True):
                 if link in cache:
                     rec = cache[link]
                 else:
@@ -130,7 +136,8 @@ def scrape(cfg: dict, debug_dir: Path | None = None, log=print) -> tuple[list[di
                         if not r.ok:
                             continue
                         t = _title_from_url(link)
-                        rec = parse_notice(_pdf_text(r.body()), bank, key, link, cat, title=t if len(t) >= 20 else None)
+                        good = len(t) >= 20 and sum(ch.isdigit() for ch in t) < len(t) * 0.15
+                        rec = parse_notice(_pdf_text(r.body()), bank, key, link, cat, title=t if good else None)
                     except Exception as e:
                         log(f"[{key}] pdf fail {link[:90]}: {e}")
                         rec = None
