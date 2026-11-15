@@ -1,11 +1,97 @@
 {
- "updated": "2026-11-15T18:39:08.643634+05:30",
- "last_attempt": "2026-11-15T18:39:08.643634+05:30",
- "total": 0,
- "new_today": 0,
+ "updated": "2026-11-15T18:44:21.400368+05:30",
+ "last_attempt": "2026-11-15T18:44:21.400368+05:30",
+ "total": 104,
+ "new_today": 104,
  "sources": {
   "baanknet": {
+   "ok": false,
+   "error": "0 listings - site is probably blocking this server"
+  },
+  "ibbi": {
    "ok": true,
+   "reached": [
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=0",
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=1",
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=2",
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=3",
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=4",
+    "https://ibbi.gov.in/liquidation-auction-notices/lists?page=5"
+   ],
+   "blocked": [],
+   "count": 120
+  },
+  "hdfc": {
+   "ok": true,
+   "reached": [
+    "https://www.hdfc.bank.in/auction-notices"
+   ],
+   "blocked": [
+    "error Page.goto: Timeout 60000ms exceeded.\nCall log:\nnavigating to \"https://www.hdfcba https://www.hdfcbank.com/personal/useful-links/auction-notices"
+   ],
+   "pdf_links": 20,
+   "parsed": 10,
+   "count": 10
+  },
+  "icici": {
+   "ok": true,
+   "reached": [
+    "https://www.icici.bank.in/about-us/notice-board/properties"
+   ],
+   "blocked": [],
+   "pdf_links": 308,
+   "parsed": 4,
+   "count": 4
+  },
+  "axis": {
+   "ok": true,
+   "reached": [
+    "https://www.axisbank.com/auction-notices",
+    "https://www.axisbank.com/auction-retail"
+   ],
+   "blocked": [],
+   "pdf_links": 926,
+   "parsed": 60,
+   "count": 60
+  },
+  "kotak": {
+   "ok": false,
+   "reached": [],
+   "blocked": [
+    "error Page.goto: net::ERR_NAME_NOT_RESOLVED at https://auctions.kotak.com/properties/a https://auctions.kotak.com/properties/auction-notices/"
+   ],
+   "pdf_links": 0,
+   "parsed": 0,
+   "count": 0
+  },
+  "bajaj": {
+   "ok": true,
+   "reached": [
+    "https://www.bajajfinserv.in/sarfaesi-auction-notices"
+   ],
+   "blocked": [],
+   "pdf_links": 10,
+   "parsed": 8,
+   "count": 8
+  },
+  "drt": {
+   "ok": true,
+   "reached": [
+    "https://drt.auctiontiger.net/"
+   ],
+   "blocked": [],
+   "pdf_links": 0,
+   "parsed": 0,
+   "count": 0
+  },
+  "mstc": {
+   "ok": true,
+   "reached": [
+    "https://www.mstcecommerce.com/auctionhome/index.jsp"
+   ],
+   "blocked": [],
+   "pdf_links": 3,
+   "parsed": 0,
    "count": 0
   }
  },
