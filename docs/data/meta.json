@@ -1,12 +1,13 @@
 {
- "updated": "2026-11-15T18:25:10.847546",
- "total": 60,
- "new_today": 7,
+ "updated": "2026-11-15T18:37:45.323161+05:30",
+ "last_attempt": "2026-11-15T18:37:45.323161+05:30",
+ "total": 0,
+ "new_today": 0,
  "sources": {
   "baanknet": {
    "ok": true,
-   "count": 60
+   "count": 0
   }
  },
- "sample": true
+ "sample": false
 }
