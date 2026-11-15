@@ -23,7 +23,7 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +53,6 @@ jobs:
         run: |
           git config user.name  "auction-bot"
           git config user.email "auction-bot@users.noreply.github.com"
-          git add docs/data
+          git add docs/data scraper/cache
           git diff --cached --quiet || git commit -m "Update listings $(date -u +%F)"
           git push

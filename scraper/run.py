@@ -14,11 +14,11 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 
-from sources import baanknet  # noqa: E402
+from sources import baanknet, ibbi, notices  # noqa: E402
 
 ROOT = HERE.parent
 DATA = ROOT / "docs" / "data"
-SOURCES = {"baanknet": baanknet.scrape}
+SOURCES = {"baanknet": baanknet.scrape, "ibbi": ibbi.scrape, "notices": notices.scrape}
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
@@ -46,9 +46,16 @@ def main():
         if not cfg.get("sources", {}).get(name, {}).get("enabled", True):
             continue
         try:
-            rows = fn(cfg["sources"][name], HERE / "debug" / name if args.discover else None)
-            status[name] = {"ok": True, "count": len(rows)}
+            out = fn(cfg["sources"][name], HERE / "debug" / name if args.discover else None)
+            rows, st = out if isinstance(out, tuple) else (out, {"ok": True, "count": len(out)})
+            if name == "baanknet" and not rows:
+                st = {"ok": False, "error": "0 listings - site is probably blocking this server"}
+            if name == "notices":
+                status.update(st)  # one entry per lender
+            else:
+                status[name] = st
             for r in rows:
+                r.setdefault("category", "PSU bank (BAANKNET)")
                 fresh[r["id"]] = r
         except Exception as e:  # one broken source must not kill the run
             status[name] = {"ok": False, "error": str(e)[:300]}

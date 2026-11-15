@@ -9,6 +9,85 @@
       ],
       "max_pages": 400,
       "delay_seconds": 1.5
+    },
+    "ibbi": {
+      "enabled": true,
+      "pages": 6
+    },
+    "notices": {
+      "enabled": true,
+      "max_new_pdfs_per_site": 60,
+      "delay_seconds": 1.0,
+      "sites": [
+        {
+          "key": "hdfc",
+          "bank": "HDFC Bank",
+          "category": "Private bank",
+          "pdf_pattern": "auction-notices/.+\\.pdf",
+          "index_urls": [
+            "https://www.hdfc.bank.in/auction-notices",
+            "https://www.hdfcbank.com/personal/useful-links/auction-notices"
+          ]
+        },
+        {
+          "key": "icici",
+          "bank": "ICICI Bank",
+          "category": "Private bank",
+          "cards": true,
+          "pdf_pattern": "\\.pdf",
+          "index_urls": [
+            "https://www.icici.bank.in/about-us/notice-board/properties"
+          ]
+        },
+        {
+          "key": "axis",
+          "bank": "Axis Bank",
+          "category": "Private bank",
+          "pdf_pattern": "auction-notices/.+\\.pdf|default-document-library/.+\\.pdf",
+          "index_urls": [
+            "https://www.axisbank.com/auction-notices",
+            "https://www.axisbank.com/auction-retail"
+          ]
+        },
+        {
+          "key": "kotak",
+          "bank": "Kotak Mahindra Bank",
+          "category": "Private bank",
+          "pdf_pattern": "\\.pdf",
+          "index_urls": [
+            "https://auctions.kotak.com/properties/auction-notices/"
+          ]
+        },
+        {
+          "key": "bajaj",
+          "bank": "Bajaj Finance",
+          "category": "NBFC / ARC",
+          "pdf_pattern": "\\.pdf",
+          "index_urls": [
+            "https://www.bajajfinserv.in/sarfaesi-auction-notices"
+          ]
+        },
+        {
+          "key": "drt",
+          "bank": "DRT Recovery Officer",
+          "category": "DRT",
+          "cards": true,
+          "pdf_pattern": "\\.pdf",
+          "index_urls": [
+            "https://drt.auctiontiger.net/"
+          ]
+        },
+        {
+          "key": "mstc",
+          "bank": "MSTC (Govt)",
+          "category": "Government",
+          "cards": true,
+          "pdf_pattern": "\\.pdf",
+          "index_urls": [
+            "https://www.mstcecommerce.com/auctionhome/index.jsp"
+          ]
+        }
+      ]
     }
   }
 }

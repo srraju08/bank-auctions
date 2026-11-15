@@ -53,6 +53,7 @@
     <summary><span>Filters <span id="activeCount" class="sub"></span></span><span class="sub">tap to hide</span></summary>
     <div class="grid">
       <label>Search<input id="q" placeholder="locality, bank, borrower…"></label>
+      <label>Source type<select id="cat"><option value="">All sources</option></select></label>
       <label>State<select id="state"><option value="">All states</option></select></label>
       <label>City / District<select id="city"><option value="">All cities</option></select></label>
       <label>Property type<select id="ptype"><option value="">All types</option></select></label>
@@ -80,7 +81,7 @@
 <script>
 const PAGE = 48;
 const $ = id => document.getElementById(id);
-const FIELDS = ["q","state","city","ptype","bank","poss","minp","maxp","within","sort","upcoming","onlyNew"];
+const FIELDS = ["q","cat","state","city","ptype","bank","poss","minp","maxp","within","sort","upcoming","onlyNew"];
 let ALL = [], view = [], page = 0;
 
 const store = {
@@ -133,6 +134,7 @@ function apply(){
     if (s.city && r.city !== s.city) return false;
     if (s.ptype && r.property_type !== s.ptype) return false;
     if (s.bank && r.bank !== s.bank) return false;
+    if (s.cat && (r.category || "PSU bank (BAANKNET)") !== s.cat) return false;
     if (s.poss && !(r.possession||"").toLowerCase().includes(s.poss)) return false;
     if (minp != null && (r.reserve_price ?? -1) < minp) return false;
     if (maxp != null && (r.reserve_price ?? Infinity) > maxp) return false;
@@ -159,6 +161,7 @@ function card(r){
   const newCut = new Date(Date.now() - 3*864e5).toISOString().slice(0,10);
   const tags = [];
   if ((r.first_seen||"") >= newCut) tags.push(`<span class="tag new">New</span>`);
+  if (r.lots) tags.push(`<span class="tag">${r.lots} lots</span>`);
   if (d != null && d >= 0 && d <= 7) tags.push(`<span class="tag soon">${d === 0 ? "Today" : d + "d left"}</span>`);
   const loc = [r.city, r.state].filter(Boolean).join(", ") || "Location not given";
   const link = r.url || "https://baanknet.com/";
@@ -170,7 +173,8 @@ function card(r){
       ${r.possession ? `<span>🔑 ${esc(r.possession)}</span>` : ""}${r.area ? `<span>📐 ${esc(r.area)}</span>` : ""}</div>
     ${r.title || r.address ? `<div class="title">${esc(r.title || "")}${r.address && r.address !== r.title ? " — " + esc(r.address) : ""}</div>` : ""}
     ${r.emd_last_date ? `<div class="meta"><span>EMD deadline: ${esc(fmtDate(r.emd_last_date))}</span></div>` : ""}
-    <a href="${esc(link)}" target="_blank" rel="noopener">View on ${esc((r.source||"portal").toUpperCase())} →</a>
+    ${r.approx ? `<div class="meta" style="color:var(--warn)">Read automatically from the sale notice. Check the figures in the notice.</div>` : ""}
+    <a href="${esc(link)}" target="_blank" rel="noopener">${r.approx ? "Open sale notice" : "View on " + esc((r.source||"portal").toUpperCase())} →</a>
   </div>`;
 }
 
@@ -196,8 +200,9 @@ async function load(){
     const when = meta.updated ? new Date(meta.updated).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}) : "unknown";
     $("updated").textContent = `${ALL.length.toLocaleString("en-IN")} listings · updated ${when}` + (meta.new_today ? ` · ${meta.new_today} new today` : "");
     const failed = Object.entries(meta.sources||{}).filter(([,v]) => !v.ok).map(([k]) => k);
+    const ok = Object.entries(meta.sources||{}).filter(([,v]) => v.ok).map(([k,v]) => `${k} ${v.count ?? 0}`);
     if (meta.sample){ $("banner").hidden = false; $("banner").textContent = "Sample data — made-up listings to show how the site works. Real listings appear after the first scraper run."; }
-    else if (failed.length){ $("banner").hidden = false; $("banner").textContent = `Last refresh failed for: ${failed.join(", ")}. Showing the previous data.`; }
+    else if (failed.length){ $("banner").hidden = false; $("banner").textContent = `Couldn't reach: ${failed.join(", ")}.` + (ok.length ? ` Working: ${ok.join(", ")}.` : ""); }
   } catch (e) {
     $("updated").textContent = "Could not load listings.";
     return;
@@ -205,6 +210,7 @@ async function load(){
   fillSelect("state", uniq(ALL.map(r => r.state)));
   fillSelect("ptype", uniq(ALL.map(r => r.property_type)));
   fillSelect("bank", uniq(ALL.map(r => r.bank)));
+  fillSelect("cat", uniq(ALL.map(r => r.category || "PSU bank (BAANKNET)")));
   const fromHash = location.hash.length > 1 ? Object.fromEntries(new URLSearchParams(location.hash.slice(1))) : null;
   if (fromHash){ for (const k of ["upcoming","onlyNew"]) if (k in fromHash) fromHash[k] = fromHash[k] === "1"; }
   const saved = fromHash || store.get("auctionPrefs");
@@ -214,7 +220,7 @@ async function load(){
 
 for (const f of FIELDS) $(f).addEventListener(f === "q" || f === "minp" || f === "maxp" ? "input" : "change", () => { if (f === "state") refreshCities(); apply(); });
 $("save").onclick = () => { $("save").textContent = store.set("auctionPrefs", getState()) ? "Saved ✓" : "Couldn't save here"; setTimeout(() => $("save").textContent = "Save as my preferences", 1800); };
-$("reset").onclick = () => { setState({q:"",state:"",city:"",ptype:"",bank:"",poss:"",minp:"",maxp:"",within:"",sort:"date",upcoming:true,onlyNew:false}); refreshCities(); history.replaceState(null,"",location.pathname); apply(); };
+$("reset").onclick = () => { setState({q:"",cat:"",state:"",city:"",ptype:"",bank:"",poss:"",minp:"",maxp:"",within:"",sort:"date",upcoming:true,onlyNew:false}); refreshCities(); history.replaceState(null,"",location.pathname); apply(); };
 $("share").onclick = async () => {
   const s = getState(), p = new URLSearchParams();
   for (const [k,v] of Object.entries(s)) if (v !== "" && v !== false) p.set(k, v === true ? "1" : v);
