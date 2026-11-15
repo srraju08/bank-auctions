@@ -3,6 +3,9 @@ name: Scrape bank auctions
 on:
   schedule:
     - cron: "17 1 * * *"   # daily 06:47 IST
+  push:
+    branches: [main]
+    paths: ["scraper/**", "requirements.txt", ".github/workflows/scrape.yml"]
   workflow_dispatch:
     inputs:
       discover:
@@ -35,10 +38,10 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Scrape
-        run: python scraper/run.py ${{ inputs.discover && '--discover' || '' }}
+        run: python scraper/run.py ${{ (github.event_name == 'push' || inputs.discover) && '--discover' || '' }}
 
       - name: Upload raw responses (discover mode)
-        if: ${{ always() && inputs.discover }}
+        if: ${{ always() && (github.event_name == 'push' || inputs.discover) }}
         uses: actions/upload-artifact@v4
         with:
           name: raw-responses
